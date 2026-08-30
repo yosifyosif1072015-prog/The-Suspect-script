@@ -1,6 +1,6 @@
 -- The Suspect Script by yosifyosif
 -- Features: Detect Killer, Detect Citizens, Speed Control, Range Control, Invisibility with Kill
--- UPDATED: Added Draggable GUI + Fixed Invisibility Bug
+-- UPDATED: Added Draggable GUI + Fixed Invisibility Bug + Color Status Buttons
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -22,6 +22,9 @@ local Config = {
     killerDetectRadius = 100,
     citizenDetectRadius = 100
 }
+
+-- Table to store toggle buttons for updating colors
+local toggleButtons = {}
 
 -- Create GUI
 local screenGui = Instance.new("ScreenGui")
@@ -99,6 +102,45 @@ local function createButton(name, position, text, callback)
         button.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
     end)
     return button
+end
+
+-- Helper function to create toggle buttons (مع تغيير الألوان)
+local function createToggleButton(name, position, text, configKey, callback)
+    local button = Instance.new("TextButton")
+    button.Name = name
+    button.Size = UDim2.new(0.48, 0, 0, 35)
+    button.Position = position
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.BorderSizePixel = 1
+    button.BorderColor3 = Color3.fromRGB(0, 200, 100)
+    button.TextSize = 12
+    button.Text = text
+    button.Parent = containerFrame
+    
+    -- تخزين الزر لتحديثه لاحقاً
+    table.insert(toggleButtons, {button = button, configKey = configKey})
+    
+    button.MouseButton1Click:Connect(function()
+        Config[configKey] = not Config[configKey]
+        callback()
+        updateToggleButtonColors()
+    end)
+    
+    return button
+end
+
+-- Function to update toggle button colors
+function updateToggleButtonColors()
+    for _, buttonData in ipairs(toggleButtons) do
+        local configValue = Config[buttonData.configKey]
+        if configValue then
+            -- 🟢 أخضر = مفعل
+            buttonData.button.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+        else
+            -- 🔴 أحمر = معطل
+            buttonData.button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        end
+    end
 end
 
 -- Dragging Functionality
@@ -190,8 +232,7 @@ createButton("DecreaseSpeedBtn", UDim2.new(0.52, 5, 0, yPos), "➖ Speed", funct
     end
 end)
 yPos = yPos + 40
-createButton("EnableSpeedBtn", UDim2.new(0, 5, 0, yPos), "Enable Speed", function()
-    Config.speedEnabled = not Config.speedEnabled
+createToggleButton("EnableSpeedBtn", UDim2.new(0, 5, 0, yPos), "Enable Speed", "speedEnabled", function()
     print((Config.speedEnabled and "✅" or "❌") .. " Speed " .. (Config.speedEnabled and "Enabled" or "Disabled"))
 end)
 yPos = yPos + 40
@@ -210,8 +251,7 @@ createButton("DecreaseRangeBtn", UDim2.new(0.52, 5, 0, yPos), "➖ Range", funct
     end
 end)
 yPos = yPos + 40
-createButton("EnableRangeBtn", UDim2.new(0, 5, 0, yPos), "Enable Range", function()
-    Config.rangeEnabled = not Config.rangeEnabled
+createToggleButton("EnableRangeBtn", UDim2.new(0, 5, 0, yPos), "Enable Range", "rangeEnabled", function()
     print((Config.rangeEnabled and "✅" or "❌") .. " Range " .. (Config.rangeEnabled and "Enabled" or "Disabled"))
 end)
 yPos = yPos + 40
@@ -219,8 +259,7 @@ yPos = yPos + 40
 -- Invisibility Section
 createLabel("InvisLabel", UDim2.new(0, 5, 0, yPos), "👻 Invisibility (Can Kill)")
 yPos = yPos + 30
-createButton("EnableInvisBtn", UDim2.new(0, 5, 0, yPos), "Toggle Invisibility", function()
-    Config.invisibilityEnabled = not Config.invisibilityEnabled
+createToggleButton("EnableInvisBtn", UDim2.new(0, 5, 0, yPos), "Toggle Invisibility", "invisibilityEnabled", function()
     print((Config.invisibilityEnabled and "✅" or "❌") .. " Invisibility " .. (Config.invisibilityEnabled and "Enabled" or "Disabled"))
 end)
 yPos = yPos + 40
@@ -238,6 +277,9 @@ statusLabel.TextSize = 11
 statusLabel.TextWrapped = true
 statusLabel.Text = "Status: Ready\nSpeed: " .. Config.currentSpeed .. "\nRange: " .. Config.currentRange
 statusLabel.Parent = containerFrame
+
+-- تحديث الألوان في البداية
+updateToggleButtonColors()
 
 -- Speed Implementation
 RunService.RenderStepped:Connect(function()
@@ -318,3 +360,4 @@ print("  - Speed: ➕➖ Buttons + Enable Button")
 print("  - Range: ➕➖ Buttons + Enable Button")
 print("  - Invisibility: Click Toggle Button")
 print("  - Kill (When Invisible): Press E")
+print("  - Toggle Buttons: 🔴 Red (OFF) / 🟢 Green (ON)")
