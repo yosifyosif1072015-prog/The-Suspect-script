@@ -1,6 +1,6 @@
 -- The Suspect Script by yosifyosif
 -- Features: Detect Killer, Detect Citizens, Speed Control, Range Control, Invisibility with Kill
--- UPDATED: Added Draggable GUI + Fixed Invisibility Bug + Color Status Buttons
+-- UPDATED: Added Draggable GUI + Fixed Invisibility Bug + Color Status Buttons + TextBox Speed Input
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -35,7 +35,7 @@ screenGui.Parent = player:WaitForChild("PlayerGui")
 -- Create Main Frame (للتحكم به)
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 320, 0, 650)
+mainFrame.Size = UDim2.new(0, 320, 0, 600)
 mainFrame.Position = UDim2.new(0, 10, 0, 10)
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 mainFrame.BorderSizePixel = 2
@@ -129,6 +129,33 @@ local function createToggleButton(name, position, text, configKey, callback)
     return button
 end
 
+-- Helper function to create TextBox for number input
+local function createNumberInput(name, position, placeholderText, onInputChanged)
+    local textBox = Instance.new("TextBox")
+    textBox.Name = name
+    textBox.Size = UDim2.new(1, -10, 0, 35)
+    textBox.Position = position
+    textBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    textBox.PlaceholderText = placeholderText
+    textBox.BorderSizePixel = 1
+    textBox.BorderColor3 = Color3.fromRGB(0, 200, 100)
+    textBox.TextSize = 14
+    textBox.ClearTextOnFocus = false
+    textBox.Parent = containerFrame
+    
+    textBox.FocusLost:Connect(function(enterPressed)
+        local value = tonumber(textBox.Text)
+        if value then
+            onInputChanged(value)
+            textBox.Text = ""
+        end
+    end)
+    
+    return textBox
+end
+
 -- Function to update toggle button colors
 function updateToggleButtonColors()
     for _, buttonData in ipairs(toggleButtons) do
@@ -219,16 +246,14 @@ end)
 yPos = yPos + 40
 
 -- Speed Control Section
-createLabel("SpeedLabel", UDim2.new(0, 5, 0, yPos), "⚡ Speed: " .. Config.currentSpeed)
+createLabel("SpeedLabel", UDim2.new(0, 5, 0, yPos), "⚡ Speed Control")
 yPos = yPos + 30
-createButton("IncreaseSpeedBtn", UDim2.new(0, 5, 0, yPos), "➕ Speed", function()
-    if Config.currentSpeed < Config.maxSpeed then
-        Config.currentSpeed = Config.currentSpeed + 10
-    end
-end)
-createButton("DecreaseSpeedBtn", UDim2.new(0.52, 5, 0, yPos), "➖ Speed", function()
-    if Config.currentSpeed > 10 then
-        Config.currentSpeed = Config.currentSpeed - 10
+createNumberInput("SpeedInput", UDim2.new(0, 5, 0, yPos), "ادخل السرعة (10-200)", function(value)
+    if value >= 10 and value <= 200 then
+        Config.currentSpeed = value
+        print("✅ السرعة تم تغييرها إلى: " .. value)
+    else
+        print("❌ أدخل رقم بين 10 و 200")
     end
 end)
 yPos = yPos + 40
@@ -238,16 +263,14 @@ end)
 yPos = yPos + 40
 
 -- Range Control Section
-createLabel("RangeLabel", UDim2.new(0, 5, 0, yPos), "📏 Range: " .. Config.currentRange)
+createLabel("RangeLabel", UDim2.new(0, 5, 0, yPos), "📏 Range Control")
 yPos = yPos + 30
-createButton("IncreaseRangeBtn", UDim2.new(0, 5, 0, yPos), "➕ Range", function()
-    if Config.currentRange < Config.maxRange then
-        Config.currentRange = Config.currentRange + 10
-    end
-end)
-createButton("DecreaseRangeBtn", UDim2.new(0.52, 5, 0, yPos), "➖ Range", function()
-    if Config.currentRange > 10 then
-        Config.currentRange = Config.currentRange - 10
+createNumberInput("RangeInput", UDim2.new(0, 5, 0, yPos), "ادخل النطاق (10-200)", function(value)
+    if value >= 10 and value <= 200 then
+        Config.currentRange = value
+        print("✅ النطاق تم تغييره إلى: " .. value)
+    else
+        print("❌ أدخل رقم بين 10 و 200")
     end
 end)
 yPos = yPos + 40
@@ -355,9 +378,8 @@ end)
 print("✅ The Suspect Script Loaded!")
 print("📌 Controls:")
 print("  - Drag the GUI by the title bar!")
-print("  - Detect Killer/Citizens: Click Buttons")
-print("  - Speed: ➕➖ Buttons + Enable Button")
-print("  - Range: ➕➖ Buttons + Enable Button")
+print("  - Speed: أدخل الرقم في TextBox واضغط Enter")
+print("  - Range: أدخل الرقم في TextBox واضغط Enter")
+print("  - Enable/Disable: اضغط على الزر (أحمر=معطل، أخضر=مفعل)")
 print("  - Invisibility: Click Toggle Button")
 print("  - Kill (When Invisible): Press E")
-print("  - Toggle Buttons: 🔴 Red (OFF) / 🟢 Green (ON)")
