@@ -1,5 +1,6 @@
 -- The Suspect Script by yosifyosif
 -- Features: Detect Killer, Detect Citizens, Speed Control, Range Control, Invisibility with Kill
+-- UPDATED: Added Draggable GUI
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -28,19 +29,52 @@ screenGui.Name = "SuspectGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
+-- Create Main Frame (للتحكم به)
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 320, 0, 650)
+mainFrame.Position = UDim2.new(0, 10, 0, 10)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mainFrame.BorderSizePixel = 2
+mainFrame.BorderColor3 = Color3.fromRGB(0, 200, 100)
+mainFrame.Parent = screenGui
+
+-- Create Title Bar (للحرك)
+local titleBar = Instance.new("TextLabel")
+titleBar.Name = "TitleBar"
+titleBar.Size = UDim2.new(1, 0, 0, 40)
+titleBar.Position = UDim2.new(0, 0, 0, 0)
+titleBar.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+titleBar.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleBar.BorderSizePixel = 0
+titleBar.TextSize = 16
+titleBar.Text = "🎮 The Suspect Script"
+titleBar.Parent = mainFrame
+
+-- Create Container للعناصر
+local containerFrame = Instance.new("ScrollingFrame")
+containerFrame.Name = "Container"
+containerFrame.Size = UDim2.new(1, 0, 1, -40)
+containerFrame.Position = UDim2.new(0, 0, 0, 40)
+containerFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+containerFrame.BorderSizePixel = 0
+containerFrame.CanvasSize = UDim2.new(0, 0, 0, 800)
+containerFrame.ScrollBarThickness = 8
+containerFrame.Parent = mainFrame
+
 -- Helper function to create labels
 local function createLabel(name, position, text)
     local label = Instance.new("TextLabel")
     label.Name = name
-    label.Size = UDim2.new(0, 300, 0, 30)
+    label.Size = UDim2.new(1, -10, 0, 25)
     label.Position = position
     label.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
     label.BorderSizePixel = 1
     label.BorderColor3 = Color3.fromRGB(0, 200, 100)
-    label.TextSize = 14
+    label.TextSize = 13
     label.Text = text
-    label.Parent = screenGui
+    label.Parent = containerFrame
     return label
 end
 
@@ -48,25 +82,62 @@ end
 local function createButton(name, position, text, callback)
     local button = Instance.new("TextButton")
     button.Name = name
-    button.Size = UDim2.new(0, 150, 0, 35)
+    button.Size = UDim2.new(0.48, 0, 0, 35)
     button.Position = position
     button.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.BorderSizePixel = 1
     button.BorderColor3 = Color3.fromRGB(0, 200, 100)
-    button.TextSize = 14
+    button.TextSize = 12
     button.Text = text
-    button.Parent = screenGui
+    button.Parent = containerFrame
     button.MouseButton1Click:Connect(callback)
+    button.MouseEnter:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    end)
+    button.MouseLeave:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+    end)
     return button
 end
 
+-- Dragging Functionality
+local dragging = false
+local dragStart = Vector2.new(0, 0)
+local frameStart = UDim2.new(0, 0, 0, 0)
+
+titleBar.InputBegan:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = UserInputService:GetMouseLocation()
+        frameStart = mainFrame.Position
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+        local currentMouse = UserInputService:GetMouseLocation()
+        local delta = currentMouse - dragStart
+        mainFrame.Position = UDim2.new(
+            frameStart.X.Scale, frameStart.X.Offset + delta.X,
+            frameStart.Y.Scale, frameStart.Y.Offset + delta.Y
+        )
+    end
+end)
+
 -- Create UI Elements
-createLabel("Title", UDim2.new(0, 10, 0, 10), "=== The Suspect Script ===")
+local yPos = 10
 
 -- Killer Detection Section
-createLabel("KillerLabel", UDim2.new(0, 10, 0, 50), "🔪 Killer Detection")
-createButton("DetectKillerBtn", UDim2.new(0, 10, 0, 85), "Detect Killer", function()
+createLabel("KillerLabel", UDim2.new(0, 5, 0, yPos), "🔪 Killer Detection")
+yPos = yPos + 30
+createButton("DetectKillerBtn", UDim2.new(0, 5, 0, yPos), "Detect Killer", function()
     local killers = {}
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= player and p.Character then
@@ -82,10 +153,12 @@ createButton("DetectKillerBtn", UDim2.new(0, 10, 0, 85), "Detect Killer", functi
         print("❌ No Killers in Range!")
     end
 end)
+yPos = yPos + 40
 
 -- Citizen Detection Section
-createLabel("CitizenLabel", UDim2.new(0, 10, 0, 130), "👥 Citizen Detection")
-createButton("DetectCitizenBtn", UDim2.new(0, 10, 0, 165), "Detect Citizens", function()
+createLabel("CitizenLabel", UDim2.new(0, 5, 0, yPos), "👥 Citizen Detection")
+yPos = yPos + 30
+createButton("DetectCitizenBtn", UDim2.new(0, 5, 0, yPos), "Detect Citizens", function()
     local citizens = {}
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= player and p.Character then
@@ -101,61 +174,70 @@ createButton("DetectCitizenBtn", UDim2.new(0, 10, 0, 165), "Detect Citizens", fu
         print("❌ No Citizens in Range!")
     end
 end)
+yPos = yPos + 40
 
 -- Speed Control Section
-createLabel("SpeedLabel", UDim2.new(0, 10, 0, 210), "⚡ Speed Control: " .. Config.currentSpeed)
-createButton("IncreaseSpeedBtn", UDim2.new(0, 10, 0, 245), "➕ Speed", function()
+createLabel("SpeedLabel", UDim2.new(0, 5, 0, yPos), "⚡ Speed: " .. Config.currentSpeed)
+yPos = yPos + 30
+createButton("IncreaseSpeedBtn", UDim2.new(0, 5, 0, yPos), "➕ Speed", function()
     if Config.currentSpeed < Config.maxSpeed then
         Config.currentSpeed = Config.currentSpeed + 10
     end
 end)
-createButton("DecreaseSpeedBtn", UDim2.new(0, 170, 0, 245), "➖ Speed", function()
+createButton("DecreaseSpeedBtn", UDim2.new(0.52, 5, 0, yPos), "➖ Speed", function()
     if Config.currentSpeed > 10 then
         Config.currentSpeed = Config.currentSpeed - 10
     end
 end)
-createButton("EnableSpeedBtn", UDim2.new(0, 10, 0, 285), "Enable Speed", function()
+yPos = yPos + 40
+createButton("EnableSpeedBtn", UDim2.new(0, 5, 0, yPos), "Enable Speed", function()
     Config.speedEnabled = not Config.speedEnabled
     print((Config.speedEnabled and "✅" or "❌") .. " Speed " .. (Config.speedEnabled and "Enabled" or "Disabled"))
 end)
+yPos = yPos + 40
 
 -- Range Control Section
-createLabel("RangeLabel", UDim2.new(0, 10, 0, 330), "📏 Range Control: " .. Config.currentRange)
-createButton("IncreaseRangeBtn", UDim2.new(0, 10, 0, 365), "➕ Range", function()
+createLabel("RangeLabel", UDim2.new(0, 5, 0, yPos), "📏 Range: " .. Config.currentRange)
+yPos = yPos + 30
+createButton("IncreaseRangeBtn", UDim2.new(0, 5, 0, yPos), "➕ Range", function()
     if Config.currentRange < Config.maxRange then
         Config.currentRange = Config.currentRange + 10
     end
 end)
-createButton("DecreaseRangeBtn", UDim2.new(0, 170, 0, 365), "➖ Range", function()
+createButton("DecreaseRangeBtn", UDim2.new(0.52, 5, 0, yPos), "➖ Range", function()
     if Config.currentRange > 10 then
         Config.currentRange = Config.currentRange - 10
     end
 end)
-createButton("EnableRangeBtn", UDim2.new(0, 10, 0, 405), "Enable Range", function()
+yPos = yPos + 40
+createButton("EnableRangeBtn", UDim2.new(0, 5, 0, yPos), "Enable Range", function()
     Config.rangeEnabled = not Config.rangeEnabled
     print((Config.rangeEnabled and "✅" or "❌") .. " Range " .. (Config.rangeEnabled and "Enabled" or "Disabled"))
 end)
+yPos = yPos + 40
 
 -- Invisibility Section
-createLabel("InvisLabel", UDim2.new(0, 10, 0, 450), "👻 Invisibility (Can Kill)")
-createButton("EnableInvisBtn", UDim2.new(0, 10, 0, 485), "Toggle Invisibility", function()
+createLabel("InvisLabel", UDim2.new(0, 5, 0, yPos), "👻 Invisibility (Can Kill)")
+yPos = yPos + 30
+createButton("EnableInvisBtn", UDim2.new(0, 5, 0, yPos), "Toggle Invisibility", function()
     Config.invisibilityEnabled = not Config.invisibilityEnabled
     print((Config.invisibilityEnabled and "✅" or "❌") .. " Invisibility " .. (Config.invisibilityEnabled and "Enabled" or "Disabled"))
 end)
+yPos = yPos + 40
 
 -- Status Label
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Name = "StatusLabel"
-statusLabel.Size = UDim2.new(0, 300, 0, 100)
-statusLabel.Position = UDim2.new(0, 10, 0, 530)
-statusLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+statusLabel.Size = UDim2.new(1, -10, 0, 80)
+statusLabel.Position = UDim2.new(0, 5, 0, yPos)
+statusLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 statusLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
 statusLabel.BorderSizePixel = 1
 statusLabel.BorderColor3 = Color3.fromRGB(0, 200, 100)
-statusLabel.TextSize = 12
+statusLabel.TextSize = 11
 statusLabel.TextWrapped = true
 statusLabel.Text = "Status: Ready\nSpeed: " .. Config.currentSpeed .. "\nRange: " .. Config.currentRange
-statusLabel.Parent = screenGui
+statusLabel.Parent = containerFrame
 
 -- Speed Implementation
 RunService.RenderStepped:Connect(function()
@@ -226,6 +308,7 @@ end)
 
 print("✅ The Suspect Script Loaded!")
 print("📌 Controls:")
+print("  - Drag the GUI by the title bar!")
 print("  - Detect Killer/Citizens: Click Buttons")
 print("  - Speed: ➕➖ Buttons + Enable Button")
 print("  - Range: ➕➖ Buttons + Enable Button")
