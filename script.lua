@@ -1,6 +1,6 @@
 -- The Suspect Script by yosifyosif
 -- Features: Detect Killer, Detect Citizens, Speed Control, Range Control, Invisibility with Kill
--- UPDATED: Added Draggable GUI
+-- UPDATED: Added Draggable GUI + Fixed Invisibility Bug
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -260,19 +260,23 @@ RunService.RenderStepped:Connect(function()
                        "\nInvisibility: " .. (Config.invisibilityEnabled and "👻 ON" or "❌ OFF")
 end)
 
--- Invisibility Implementation
+-- Invisibility Implementation (محسّن وبدون مشاكل)
 RunService.RenderStepped:Connect(function()
     if character then
         for _, part in pairs(character:GetDescendants()) do
             if part:IsA("BasePart") then
                 if Config.invisibilityEnabled then
-                    part.Transparency = 0.5
-                    part.CanCollide = false
+                    -- تفعيل الاختفاء بدون تعطيل الحركة
+                    if part.Name ~= "HumanoidRootPart" then
+                        part.Transparency = 0.7
+                        part.CanCollide = false
+                    end
                 else
+                    -- إرجاع الحالة الطبيعية
                     if part.Name ~= "HumanoidRootPart" then
                         part.Transparency = 0
+                        part.CanCollide = true
                     end
-                    part.CanCollide = true
                 end
             end
         end
